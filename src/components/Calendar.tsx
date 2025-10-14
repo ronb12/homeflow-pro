@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, addDoc, deleteDoc, doc, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useStore } from '../store';
 import { CalendarEvent } from '../types';
@@ -10,6 +10,7 @@ export const Calendar = () => {
   const { user } = useStore();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [selectedDate] = useState(new Date());
   const [newEvent, setNewEvent] = useState({
     title: '',
@@ -48,16 +49,36 @@ export const Calendar = () => {
     if (!user || !newEvent.title) return;
 
     try {
-      await addDoc(collection(db, 'events'), {
-        ...newEvent,
-        userId: user.uid,
-      });
+      if (editingEvent) {
+        // Update existing event
+        await updateDoc(doc(db, 'events', editingEvent.id), newEvent);
+      } else {
+        // Create new event
+        await addDoc(collection(db, 'events'), {
+          ...newEvent,
+          userId: user.uid,
+        });
+      }
       setShowModal(false);
+      setEditingEvent(null);
       setNewEvent({ title: '', description: '', startDate: '', endDate: '', location: '', color: '#3b82f6' });
       fetchEvents();
     } catch (error) {
-      console.error('Error adding event:', error);
+      console.error('Error saving event:', error);
     }
+  };
+
+  const editEvent = (event: CalendarEvent) => {
+    setEditingEvent(event);
+    setNewEvent({
+      title: event.title,
+      description: event.description || '',
+      startDate: event.startDate,
+      endDate: event.endDate,
+      location: event.location || '',
+      color: event.color || '#3b82f6'
+    });
+    setShowModal(true);
   };
 
   const deleteEvent = async (eventId: string) => {
@@ -179,7 +200,10 @@ export const Calendar = () => {
                 background: event.color || 'var(--primary)',
                 borderRadius: '2px'
               }} />
-              <div style={{ flex: 1 }}>
+              <div 
+                style={{ flex: 1, cursor: 'pointer' }}
+                onClick={() => editEvent(event)}
+              >
                 <div style={{ fontWeight: '600' }}>{event.title}</div>
                 <div className="text-small text-muted">
                   {format(new Date(event.startDate), 'MMM d, yyyy h:mm a')}
@@ -190,7 +214,10 @@ export const Calendar = () => {
               </div>
               <button
                 className="btn btn-danger btn-sm"
-                onClick={() => deleteEvent(event.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteEvent(event.id);
+                }}
               >
                 <Trash2 size={16} />
               </button>
@@ -200,11 +227,19 @@ export const Calendar = () => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => {
+          setShowModal(false);
+          setEditingEvent(null);
+          setNewEvent({ title: '', description: '', startDate: '', endDate: '', location: '', color: '#3b82f6' });
+        }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 className="modal-title">Add New Event</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+              <h3 className="modal-title">{editingEvent ? 'Edit Event' : 'Add New Event'}</h3>
+              <button className="modal-close" onClick={() => {
+                setShowModal(false);
+                setEditingEvent(null);
+                setNewEvent({ title: '', description: '', startDate: '', endDate: '', location: '', color: '#3b82f6' });
+              }}>×</button>
             </div>
 
             <div className="form-group">
@@ -267,11 +302,15 @@ export const Calendar = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button className="btn btn-outline" onClick={() => setShowModal(false)}>
+              <button className="btn btn-outline" onClick={() => {
+                setShowModal(false);
+                setEditingEvent(null);
+                setNewEvent({ title: '', description: '', startDate: '', endDate: '', location: '', color: '#3b82f6' });
+              }}>
                 Cancel
               </button>
               <button className="btn btn-primary" onClick={addEvent} disabled={!newEvent.title}>
-                Add Event
+                {editingEvent ? 'Update Event' : 'Add Event'}
               </button>
             </div>
           </div>
