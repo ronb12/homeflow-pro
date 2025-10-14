@@ -27,11 +27,10 @@ export const Dashboard = () => {
         const tasksSnap = await getDocs(tasksQuery);
         const tasks = tasksSnap.docs.map(doc => doc.data());
         
-        // Fetch events
+        // Fetch events (show all events, not just future ones)
         const eventsQuery = query(
           collection(db, 'events'),
           where('userId', '==', user.uid),
-          where('startDate', '>=', new Date().toISOString()),
           limit(10)
         );
         const eventsSnap = await getDocs(eventsQuery);
@@ -44,15 +43,10 @@ export const Dashboard = () => {
         );
         const billsSnap = await getDocs(billsQuery);
         
-        // Fetch this month's expenses
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-        
+        // Fetch all expenses (show all, not just this month)
         const expensesQuery = query(
           collection(db, 'expenses'),
-          where('userId', '==', user.uid),
-          where('date', '>=', startOfMonth.toISOString())
+          where('userId', '==', user.uid)
         );
         const expensesSnap = await getDocs(expensesQuery);
         const expenses = expensesSnap.docs.map(doc => doc.data());
