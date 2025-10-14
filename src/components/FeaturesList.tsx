@@ -1,0 +1,31 @@
+// This file exports all feature components for easy importing
+export { Dashboard } from './Dashboard';
+export { Tasks } from './Tasks';
+export { Calendar } from './Calendar';
+export { Shopping } from './Shopping';
+export { Budget } from './Budget';
+export { Bills } from './Bills';
+export { Inventory } from './Inventory';
+export { Meals } from './Meals';
+export { Recipes } from './Recipes';
+export { Family } from './Family';
+export { Chores } from './Chores';
+export { Documents } from './Documents';
+export { Contacts } from './Contacts';
+export { Maintenance } from './Maintenance';
+export { Warranties } from './Warranties';
+export { Pets } from './Pets';
+export { Plants } from './Plants';
+export { Weather } from './Weather';
+export { Notes } from './Notes';
+export { Vehicles } from './Vehicles';
+export { Insurance } from './Insurance';
+export { Passwords } from './Passwords';
+export { Guests } from './Guests';
+export { Energy } from './Energy';
+export { Devices } from './Devices';
+export { Packages } from './Packages';
+export { Subscriptions } from './Subscriptions';
+export { Goals } from './Goals';
+export { Notifications } from './Notifications';
+
