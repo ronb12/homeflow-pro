@@ -12,6 +12,7 @@ export const Budget = () => {
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [monthlyBudget, setMonthlyBudget] = useState(2000); // Default budget
   const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [budgetInputs, setBudgetInputs] = useState({ income: '', budget: '' }); // Separate input states
   const [newExpense, setNewExpense] = useState({ description: '', amount: 0, category: 'Food', date: new Date().toISOString().split('T')[0] });
 
   useEffect(() => {
@@ -24,14 +25,35 @@ export const Budget = () => {
     // Load from localStorage (or could be from Firestore)
     const savedBudget = localStorage.getItem(`budget_${user?.uid}`);
     const savedIncome = localStorage.getItem(`income_${user?.uid}`);
-    if (savedBudget) setMonthlyBudget(parseFloat(savedBudget));
-    if (savedIncome) setMonthlyIncome(parseFloat(savedIncome));
+    if (savedBudget) {
+      const budgetVal = parseFloat(savedBudget);
+      setMonthlyBudget(budgetVal);
+      setBudgetInputs(prev => ({ ...prev, budget: budgetVal.toString() }));
+    }
+    if (savedIncome) {
+      const incomeVal = parseFloat(savedIncome);
+      setMonthlyIncome(incomeVal);
+      setBudgetInputs(prev => ({ ...prev, income: incomeVal.toString() }));
+    }
+  };
+
+  const openBudgetModal = () => {
+    // Pre-fill inputs with current values
+    setBudgetInputs({
+      income: monthlyIncome > 0 ? monthlyIncome.toString() : '',
+      budget: monthlyBudget > 0 ? monthlyBudget.toString() : ''
+    });
+    setShowBudgetModal(true);
   };
 
   const saveBudgetSettings = () => {
     if (!user) return;
-    localStorage.setItem(`budget_${user.uid}`, monthlyBudget.toString());
-    localStorage.setItem(`income_${user.uid}`, monthlyIncome.toString());
+    const income = parseFloat(budgetInputs.income) || 0;
+    const budget = parseFloat(budgetInputs.budget) || 0;
+    setMonthlyIncome(income);
+    setMonthlyBudget(budget);
+    localStorage.setItem(`budget_${user.uid}`, budget.toString());
+    localStorage.setItem(`income_${user.uid}`, income.toString());
     setShowBudgetModal(false);
   };
 
@@ -70,7 +92,7 @@ export const Budget = () => {
       <div className="card-header" style={{ marginBottom: '24px' }}>
         <h2 className="card-title"><DollarSign size={24} />Budget & Expenses</h2>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn btn-outline" onClick={() => setShowBudgetModal(true)}>
+          <button className="btn btn-outline" onClick={openBudgetModal}>
             <Settings size={18} />Set Budget
           </button>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
@@ -177,18 +199,30 @@ export const Budget = () => {
             </div>
             <div className="form-group">
               <label className="form-label">Monthly Income *</label>
-              <input type="number" step="0.01" className="input" value={monthlyIncome}
-                onChange={e => setMonthlyIncome(parseFloat(e.target.value) || 0)} 
-                placeholder="Enter your monthly income"/>
+              <input 
+                type="number" 
+                step="0.01" 
+                className="input" 
+                value={budgetInputs.income}
+                onChange={e => setBudgetInputs({ ...budgetInputs, income: e.target.value })} 
+                placeholder="Enter your monthly income"
+                onFocus={e => e.target.select()}
+              />
               <div style={{ fontSize: '12px', color: 'var(--gray)', marginTop: '4px' }}>
                 Your total monthly income (salary, side income, etc.)
               </div>
             </div>
             <div className="form-group">
               <label className="form-label">Monthly Budget *</label>
-              <input type="number" step="0.01" className="input" value={monthlyBudget}
-                onChange={e => setMonthlyBudget(parseFloat(e.target.value) || 0)} 
-                placeholder="Enter your monthly budget"/>
+              <input 
+                type="number" 
+                step="0.01" 
+                className="input" 
+                value={budgetInputs.budget}
+                onChange={e => setBudgetInputs({ ...budgetInputs, budget: e.target.value })} 
+                placeholder="Enter your monthly budget"
+                onFocus={e => e.target.select()}
+              />
               <div style={{ fontSize: '12px', color: 'var(--gray)', marginTop: '4px' }}>
                 How much you plan to spend each month
               </div>
@@ -200,9 +234,9 @@ export const Budget = () => {
               marginBottom: '16px'
             }}>
               <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>Quick Calculation:</div>
-              <div style={{ fontSize: '14px' }}>Income: ${monthlyIncome.toFixed(2)}</div>
-              <div style={{ fontSize: '14px' }}>Budget: ${monthlyBudget.toFixed(2)}</div>
-              <div style={{ fontSize: '14px' }}>Savings Goal: ${(monthlyIncome - monthlyBudget).toFixed(2)}</div>
+              <div style={{ fontSize: '14px' }}>Income: ${(parseFloat(budgetInputs.income) || 0).toFixed(2)}</div>
+              <div style={{ fontSize: '14px' }}>Budget: ${(parseFloat(budgetInputs.budget) || 0).toFixed(2)}</div>
+              <div style={{ fontSize: '14px' }}>Savings Goal: ${((parseFloat(budgetInputs.income) || 0) - (parseFloat(budgetInputs.budget) || 0)).toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button className="btn btn-outline" onClick={() => setShowBudgetModal(false)}>Cancel</button>
