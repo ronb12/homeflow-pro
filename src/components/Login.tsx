@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { login, register } from '../utils/auth';
-import { Home } from 'lucide-react';
+import { login, register, resetPassword } from '../utils/auth';
+import { Home, Mail } from 'lucide-react';
 
 export const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     const result = isLogin 
@@ -25,10 +28,136 @@ export const Login = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    if (!email) {
+      setError('Please enter your email address');
+      setLoading(false);
+      return;
+    }
+
+    const result = await resetPassword(email);
+    
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setSuccess('Password reset email sent! Check your inbox.');
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setSuccess('');
+      }, 3000);
+    }
+    
+    setLoading(false);
+  };
+
   const loadTestCredentials = () => {
     setEmail('demo@homeflowpro.com');
     setPassword('HomeFlow2025!');
   };
+
+  // Forgot Password Modal
+  if (showForgotPassword) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+        padding: '20px'
+      }}>
+        <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px'
+            }}>
+              <Mail size={32} color="white" />
+            </div>
+            <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px' }}>
+              Reset Password
+            </h1>
+            <p style={{ color: 'var(--gray)', fontSize: '14px' }}>
+              Enter your email to receive reset instructions
+            </p>
+          </div>
+
+          <form onSubmit={handleForgotPassword}>
+            <div className="form-group">
+              <label className="form-label">Email Address</label>
+              <input
+                type="email"
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="Enter your email"
+              />
+            </div>
+
+            {error && (
+              <div style={{
+                padding: '12px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: 'var(--danger)',
+                borderRadius: 'var(--radius)',
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div style={{
+                padding: '12px',
+                background: 'rgba(16, 185, 129, 0.1)',
+                color: 'var(--success)',
+                borderRadius: 'var(--radius)',
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {success}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="btn btn-success"
+              style={{ width: '100%', marginBottom: '12px' }}
+              disabled={loading}
+            >
+              {loading ? 'Sending...' : 'Send Reset Email'}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{ width: '100%' }}
+              onClick={() => {
+                setShowForgotPassword(false);
+                setError('');
+                setSuccess('');
+              }}
+            >
+              Back to Login
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -116,6 +245,25 @@ export const Login = () => {
           >
             Load Test Credentials
           </button>
+
+          {isLogin && (
+            <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--primary)',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  textDecoration: 'underline'
+                }}
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
 
           <p style={{ textAlign: 'center', fontSize: '14px', color: 'var(--gray)' }}>
             {isLogin ? "Don't have an account? " : "Already have an account? "}

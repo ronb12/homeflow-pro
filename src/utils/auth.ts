@@ -1,4 +1,4 @@
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User as FirebaseUser } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '../firebase';
 
 export const login = async (email: string, password: string) => {
@@ -16,6 +16,15 @@ export const register = async (email: string, password: string) => {
     return { user: result.user, error: null };
   } catch (error: any) {
     return { user: null, error: error.message };
+  }
+};
+
+export const resetPassword = async (email: string) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return { success: true, error: null };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 };
 
