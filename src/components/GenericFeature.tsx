@@ -1,6 +1,6 @@
 // Generic reusable component template for simple CRUD features
 import { useState, useEffect, ReactNode } from 'react';
-import { collection, addDoc, deleteDoc, doc, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useStore } from '../store';
 import { Plus, Trash2, Clock } from 'lucide-react';
@@ -33,6 +33,7 @@ export const GenericFeature = ({
   const { user } = useStore();
   const [items, setItems] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any | null>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
 
@@ -65,14 +66,40 @@ export const GenericFeature = ({
     }
   };
 
-  const addItem = async () => {
+  const openModal = () => {
+    setEditingItem(null);
+    const initialData: Record<string, any> = {};
+    fields.forEach(field => {
+      if (field.type === 'checkbox') initialData[field.name] = false;
+      else if (field.type === 'number') initialData[field.name] = 0;
+      else if (field.type === 'date') initialData[field.name] = new Date().toISOString().split('T')[0];
+      else initialData[field.name] = '';
+    });
+    setFormData(initialData);
+    setShowModal(true);
+  };
+
+  const editItem = (item: any) => {
+    setEditingItem(item);
+    setFormData({ ...item });
+    setShowModal(true);
+  };
+
+  const saveItem = async () => {
     if (!user) return;
     try {
-      await addDoc(collection(db, collectionName), { ...formData, userId: user.uid, createdAt: new Date().toISOString() });
+      if (editingItem) {
+        // Update existing item
+        await updateDoc(doc(db, collectionName, editingItem.id), formData);
+      } else {
+        // Add new item
+        await addDoc(collection(db, collectionName), { ...formData, userId: user.uid, createdAt: new Date().toISOString() });
+      }
       setShowModal(false);
+      setEditingItem(null);
       fetchItems();
     } catch (error) {
-      console.error('Error adding item:', error);
+      console.error('Error saving item:', error);
     }
   };
 
@@ -93,7 +120,7 @@ export const GenericFeature = ({
     <div>
       <div className="card-header" style={{ marginBottom: '24px' }}>
         <h2 className="card-title">{icon}{title}</h2>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={openModal}>
           <Plus size={18} />Add New
         </button>
       </div>
@@ -104,18 +131,24 @@ export const GenericFeature = ({
         <div className="card">
           {items.map(item => (
             <div key={item.id}>
-              {renderItem(item, () => deleteItem(item.id))}
+              {renderItem(item, () => deleteItem(item.id), () => editItem(item))}
             </div>
           ))}
         </div>
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => {
+          setShowModal(false);
+          setEditingItem(null);
+        }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 className="modal-title">Add New {title.replace(/s$/, '')}</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+              <h3 className="modal-title">{editingItem ? 'Edit' : 'Add New'} {title.replace(/s$/, '')}</h3>
+              <button className="modal-close" onClick={() => {
+                setShowModal(false);
+                setEditingItem(null);
+              }}>×</button>
             </div>
 
             {fields.map(field => (
@@ -155,8 +188,13 @@ export const GenericFeature = ({
             ))}
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={addItem}>Add</button>
+              <button className="btn btn-outline" onClick={() => {
+                setShowModal(false);
+                setEditingItem(null);
+              }}>Cancel</button>
+              <button className="btn btn-primary" onClick={saveItem}>
+                {editingItem ? 'Update' : 'Add'}
+              </button>
             </div>
           </div>
         </div>
