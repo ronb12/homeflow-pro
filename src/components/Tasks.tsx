@@ -9,6 +9,7 @@ export const Tasks = () => {
   const { user } = useStore();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -48,18 +49,36 @@ export const Tasks = () => {
     if (!user || !newTask.title) return;
 
     try {
-      await addDoc(collection(db, 'tasks'), {
-        ...newTask,
-        userId: user.uid,
-        completed: false,
-        createdAt: new Date().toISOString(),
-      });
+      if (editingTask) {
+        // Update existing task
+        await updateDoc(doc(db, 'tasks', editingTask.id), newTask);
+      } else {
+        // Create new task
+        await addDoc(collection(db, 'tasks'), {
+          ...newTask,
+          userId: user.uid,
+          completed: false,
+          createdAt: new Date().toISOString(),
+        });
+      }
       setShowModal(false);
+      setEditingTask(null);
       setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
       fetchTasks();
     } catch (error) {
-      console.error('Error adding task:', error);
+      console.error('Error saving task:', error);
     }
+  };
+
+  const editTask = (task: Task) => {
+    setEditingTask(task);
+    setNewTask({
+      title: task.title,
+      description: task.description || '',
+      priority: task.priority,
+      dueDate: task.dueDate || '',
+    });
+    setShowModal(true);
   };
 
   const toggleTask = async (task: Task) => {
@@ -129,7 +148,10 @@ export const Tasks = () => {
                 )}
               </button>
               
-              <div style={{ flex: 1 }}>
+              <div 
+                style={{ flex: 1, cursor: 'pointer' }}
+                onClick={() => editTask(task)}
+              >
                 <div style={{
                   fontWeight: '600',
                   textDecoration: task.completed ? 'line-through' : 'none',
@@ -169,11 +191,19 @@ export const Tasks = () => {
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => {
+          setShowModal(false);
+          setEditingTask(null);
+          setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
+        }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 className="modal-title">Add New Task</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+              <h3 className="modal-title">{editingTask ? 'Edit Task' : 'Add New Task'}</h3>
+              <button className="modal-close" onClick={() => {
+                setShowModal(false);
+                setEditingTask(null);
+                setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
+              }}>×</button>
             </div>
 
             <div className="form-group">
@@ -221,11 +251,15 @@ export const Tasks = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button className="btn btn-outline" onClick={() => setShowModal(false)}>
+              <button className="btn btn-outline" onClick={() => {
+                setShowModal(false);
+                setEditingTask(null);
+                setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
+              }}>
                 Cancel
               </button>
               <button className="btn btn-primary" onClick={addTask} disabled={!newTask.title}>
-                Add Task
+                {editingTask ? 'Update Task' : 'Add Task'}
               </button>
             </div>
           </div>
