@@ -1,0 +1,233 @@
+{
+  "features": [
+    {
+      "name": "Forgot Password",
+      "status": "passed",
+      "details": [
+        "Navigation works",
+        "Form accessible"
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Task Management",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Calendar & Events",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Shopping Lists",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Budget Tracker",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Bill Reminders",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Home Inventory",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Meal Planning",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Recipe Storage",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Family Members",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Chore Assignment",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Document Storage",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Emergency Contacts",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Home Maintenance",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Warranty Tracking",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Pet Management",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Plant Care",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Weather Widget",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Quick Notes",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Vehicle Management",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Insurance Tracking",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Password Manager",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Guest Management",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Energy Tracking",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Smart Home Devices",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Package Tracking",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Subscription Management",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    },
+    {
+      "name": "Goal Setting",
+      "status": "passed",
+      "details": [
+        "Navigation successful",
+        "UI rendered correctly"
+      ]
+    },
+    {
+      "name": "Notification Center",
+      "status": "passed",
+      "details": [
+        "Navigation successful"
+      ]
+    }
+  ],
+  "totalTested": 30,
+  "passed": 30,
+  "failed": 0,
+  "startTime": "2025-10-14T21:49:39.640Z",
+  "endTime": "2025-10-14T21:51:16.047Z"
+}
