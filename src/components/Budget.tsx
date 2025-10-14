@@ -3,18 +3,37 @@ import { collection, addDoc, deleteDoc, doc, query, where, getDocs, orderBy } fr
 import { db } from '../firebase';
 import { useStore } from '../store';
 import { Expense } from '../types';
-import { Plus, DollarSign, Trash2, TrendingDown } from 'lucide-react';
+import { Plus, DollarSign, Trash2, TrendingDown, Settings, TrendingUp } from 'lucide-react';
 
 export const Budget = () => {
   const { user } = useStore();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [monthlyBudget, setMonthlyBudget] = useState(2000); // Default budget
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [newExpense, setNewExpense] = useState({ description: '', amount: 0, category: 'Food', date: new Date().toISOString().split('T')[0] });
 
   useEffect(() => {
     if (!user) return;
     fetchExpenses();
+    loadBudgetSettings();
   }, [user]);
+
+  const loadBudgetSettings = () => {
+    // Load from localStorage (or could be from Firestore)
+    const savedBudget = localStorage.getItem(`budget_${user?.uid}`);
+    const savedIncome = localStorage.getItem(`income_${user?.uid}`);
+    if (savedBudget) setMonthlyBudget(parseFloat(savedBudget));
+    if (savedIncome) setMonthlyIncome(parseFloat(savedIncome));
+  };
+
+  const saveBudgetSettings = () => {
+    if (!user) return;
+    localStorage.setItem(`budget_${user.uid}`, monthlyBudget.toString());
+    localStorage.setItem(`income_${user.uid}`, monthlyIncome.toString());
+    setShowBudgetModal(false);
+  };
 
   const fetchExpenses = async () => {
     if (!user) return;
@@ -41,28 +60,76 @@ export const Budget = () => {
     acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
     return acc;
   }, {} as Record<string, number>);
+  
+  const remainingBudget = monthlyBudget - totalExpenses;
+  const budgetPercentUsed = monthlyBudget > 0 ? (totalExpenses / monthlyBudget) * 100 : 0;
+  const netIncome = monthlyIncome - totalExpenses;
 
   return (
     <div>
       <div className="card-header" style={{ marginBottom: '24px' }}>
         <h2 className="card-title"><DollarSign size={24} />Budget & Expenses</h2>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={18} />Add Expense
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="btn btn-outline" onClick={() => setShowBudgetModal(true)}>
+            <Settings size={18} />Set Budget
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={18} />Add Expense
+          </button>
+        </div>
+      </div>
+
+      {/* Budget Overview Card */}
+      <div className="card" style={{ marginBottom: '24px', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05))' }}>
+        <div className="grid grid-3" style={{ gap: '24px' }}>
+          <div>
+            <div style={{ fontSize: '14px', color: 'var(--gray)', marginBottom: '8px' }}>Monthly Income</div>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--success)' }}>
+              ${monthlyIncome.toFixed(2)}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '14px', color: 'var(--gray)', marginBottom: '8px' }}>Monthly Budget</div>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--primary)' }}>
+              ${monthlyBudget.toFixed(2)}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '14px', color: 'var(--gray)', marginBottom: '8px' }}>Remaining</div>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: remainingBudget >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+              ${remainingBudget.toFixed(2)}
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
+            <span>Budget Used: {budgetPercentUsed.toFixed(1)}%</span>
+            <span>${totalExpenses.toFixed(2)} / ${monthlyBudget.toFixed(2)}</span>
+          </div>
+          <div className="progress-bar" style={{ height: '12px' }}>
+            <div 
+              className="progress-fill" 
+              style={{ 
+                width: `${Math.min(budgetPercentUsed, 100)}%`,
+                background: budgetPercentUsed > 100 ? 'var(--danger)' : budgetPercentUsed > 80 ? 'var(--warning)' : 'var(--success)'
+              }} 
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-3" style={{ marginBottom: '24px' }}>
         <div className="stat-card">
           <div className="stat-value">${totalExpenses.toFixed(2)}</div>
-          <div className="stat-label">Total Expenses</div>
+          <div className="stat-label">Total Spent</div>
         </div>
         <div className="stat-card" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
           <div className="stat-value">{expenses.length}</div>
           <div className="stat-label">Transactions</div>
         </div>
-        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
-          <div className="stat-value">${(totalExpenses / Math.max(expenses.length, 1)).toFixed(2)}</div>
-          <div className="stat-label">Average</div>
+        <div className="stat-card" style={{ background: remainingBudget >= 0 ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)' }}>
+          <div className="stat-value">${Math.abs(remainingBudget).toFixed(2)}</div>
+          <div className="stat-label">{remainingBudget >= 0 ? 'Left to Spend' : 'Over Budget'}</div>
         </div>
       </div>
 
@@ -100,6 +167,52 @@ export const Budget = () => {
         </div>
       </div>
 
+      {/* Budget Settings Modal */}
+      {showBudgetModal && (
+        <div className="modal-overlay" onClick={() => setShowBudgetModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Budget Settings</h3>
+              <button className="modal-close" onClick={() => setShowBudgetModal(false)}>×</button>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Monthly Income *</label>
+              <input type="number" step="0.01" className="input" value={monthlyIncome}
+                onChange={e => setMonthlyIncome(parseFloat(e.target.value) || 0)} 
+                placeholder="Enter your monthly income"/>
+              <div style={{ fontSize: '12px', color: 'var(--gray)', marginTop: '4px' }}>
+                Your total monthly income (salary, side income, etc.)
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Monthly Budget *</label>
+              <input type="number" step="0.01" className="input" value={monthlyBudget}
+                onChange={e => setMonthlyBudget(parseFloat(e.target.value) || 0)} 
+                placeholder="Enter your monthly budget"/>
+              <div style={{ fontSize: '12px', color: 'var(--gray)', marginTop: '4px' }}>
+                How much you plan to spend each month
+              </div>
+            </div>
+            <div style={{ 
+              padding: '12px', 
+              background: 'rgba(59, 130, 246, 0.1)', 
+              borderRadius: 'var(--radius)',
+              marginBottom: '16px'
+            }}>
+              <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>Quick Calculation:</div>
+              <div style={{ fontSize: '14px' }}>Income: ${monthlyIncome.toFixed(2)}</div>
+              <div style={{ fontSize: '14px' }}>Budget: ${monthlyBudget.toFixed(2)}</div>
+              <div style={{ fontSize: '14px' }}>Savings Goal: ${(monthlyIncome - monthlyBudget).toFixed(2)}</div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button className="btn btn-outline" onClick={() => setShowBudgetModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={saveBudgetSettings}>Save Budget</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Expense Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
