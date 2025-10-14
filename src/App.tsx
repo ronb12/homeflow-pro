@@ -5,6 +5,7 @@ import { useStore } from './store';
 import { formatUser } from './utils/auth';
 import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
+import { PWAInstall } from './components/PWAInstall';
 import { Dashboard, Tasks, Calendar, Shopping, Budget, Bills } from './components/FeaturesList';
 import { Inventory, Meals, Recipes, Family, Chores, Documents, Contacts, Maintenance, Warranties, Pets, Plants, Weather, Notes, Vehicles, Insurance, Passwords, Guests, Energy, Devices, Packages, Subscriptions, Goals, Notifications } from './components/AllFeatures';
 
@@ -24,7 +25,12 @@ const App = () => {
   }, [setUser]);
 
   if (!user) {
-    return <Login />;
+    return (
+      <>
+        <Login />
+        <PWAInstall />
+      </>
+    );
   }
 
   const renderView = () => {
@@ -63,20 +69,23 @@ const App = () => {
   };
 
   return (
-    <div style={{ display: 'flex' }}>
-      <Sidebar />
-      <main style={{
-        marginLeft: '280px',
-        flex: 1,
-        padding: '32px',
-        minHeight: '100vh',
-        background: 'var(--light)'
-      }}>
-        <div className="container">
-          {renderView()}
-        </div>
-      </main>
-    </div>
+    <>
+      <div style={{ display: 'flex' }}>
+        <Sidebar />
+        <main style={{
+          marginLeft: '280px',
+          flex: 1,
+          padding: '32px',
+          minHeight: '100vh',
+          background: 'var(--light)'
+        }}>
+          <div className="container">
+            {renderView()}
+          </div>
+        </main>
+      </div>
+      <PWAInstall />
+    </>
   );
 };
 
