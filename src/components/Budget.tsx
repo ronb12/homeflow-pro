@@ -3,7 +3,7 @@ import { collection, addDoc, deleteDoc, doc, query, where, getDocs, orderBy } fr
 import { db } from '../firebase';
 import { useStore } from '../store';
 import { Expense } from '../types';
-import { Plus, DollarSign, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
+import { Plus, DollarSign, Trash2, TrendingDown } from 'lucide-react';
 
 export const Budget = () => {
   const { user } = useStore();

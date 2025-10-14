@@ -1,9 +1,9 @@
 // Generic reusable component template for simple CRUD features
 import { useState, useEffect, ReactNode } from 'react';
-import { collection, addDoc, updateDoc, deleteDoc, doc, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useStore } from '../store';
-import { Plus, Trash2, Edit2, Clock } from 'lucide-react';
+import { Plus, Trash2, Clock } from 'lucide-react';
 
 interface Field {
   name: string;

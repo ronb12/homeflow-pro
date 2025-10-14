@@ -10,7 +10,7 @@ export const Calendar = () => {
   const { user } = useStore();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate] = useState(new Date());
   const [newEvent, setNewEvent] = useState({
     title: '',
     description: '',

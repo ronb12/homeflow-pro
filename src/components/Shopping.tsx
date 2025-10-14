@@ -3,7 +3,7 @@ import { collection, addDoc, updateDoc, deleteDoc, doc, query, where, getDocs } 
 import { db } from '../firebase';
 import { useStore } from '../store';
 import { ShoppingItem } from '../types';
-import { Plus, ShoppingCart, Trash2, Check, Clock } from 'lucide-react';
+import { Plus, ShoppingCart, Trash2, Check } from 'lucide-react';
 
 export const Shopping = () => {
   const { user } = useStore();
