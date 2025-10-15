@@ -1,6 +1,6 @@
 // Simplified implementations for remaining features
 import { GenericFeature } from './GenericFeature';
-import { Trash2, Home, UtensilsCrossed, BookOpen, Users, Briefcase, FolderOpen, Phone, Wrench, Shield, Dog, Leaf, Link as LinkIcon, StickyNote, Car, CreditCard, Lock, UserPlus, Zap, Smartphone, Package, Repeat, Target, Bell } from 'lucide-react';
+import { Trash2, Home, UtensilsCrossed, BookOpen, Users, Briefcase, FolderOpen, Phone, Wrench, Shield, Dog, Leaf, Link as LinkIcon, StickyNote, Car, CreditCard, Lock, UserPlus, Zap, Smartphone, Package, Repeat, Target, Bell, ExternalLink } from 'lucide-react';
 
 export const Inventory = () => (
   <GenericFeature
@@ -544,31 +544,109 @@ export const Devices = () => (
   />
 );
 
-export const Packages = () => (
-  <GenericFeature
-    collectionName="packages"
-    title="Package Tracking"
-    icon={<Package size={24} />}
-    fields={[
-      { name: 'description', label: 'Package Description', type: 'text', required: true },
-      { name: 'trackingNumber', label: 'Tracking Number', type: 'text' },
-      { name: 'carrier', label: 'Carrier', type: 'select', options: ['USPS', 'FedEx', 'UPS', 'Amazon', 'Other'] },
-      { name: 'expectedDelivery', label: 'Expected Delivery', type: 'date' },
-      { name: 'status', label: 'Status', type: 'select', options: ['Ordered', 'Shipped', 'In Transit', 'Out for Delivery', 'Delivered'] },
-    ]}
-    renderItem={(item, onDelete, onEdit) => (
-      <div className="list-item">
-        <div style={{ flex: 1, cursor: 'pointer' }} onClick={onEdit}>
-          <div style={{ fontWeight: '600' }}>{item.description}</div>
-          <div className="text-small text-muted">
-            {item.carrier} • {item.status} • {new Date(item.expectedDelivery).toLocaleDateString()}
+export const Packages = () => {
+  // Generate tracking URL based on carrier
+  const getTrackingUrl = (carrier: string, trackingNumber: string) => {
+    if (!trackingNumber) return null;
+    
+    const carriers: Record<string, string> = {
+      'USPS': `https://tools.usps.com/go/TrackConfirmAction?tLabels=${trackingNumber}`,
+      'FedEx': `https://www.fedex.com/fedextrack/?trknbr=${trackingNumber}`,
+      'UPS': `https://www.ups.com/track?tracknum=${trackingNumber}`,
+      'Amazon': `https://www.amazon.com/gp/css/order-history?search=${trackingNumber}`,
+    };
+    
+    return carriers[carrier] || null;
+  };
+
+  return (
+    <GenericFeature
+      collectionName="packages"
+      title="Package Tracking"
+      icon={<Package size={24} />}
+      fields={[
+        { name: 'description', label: 'Package Description', type: 'text', required: true },
+        { name: 'trackingNumber', label: 'Tracking Number', type: 'text' },
+        { name: 'carrier', label: 'Carrier', type: 'select', options: ['USPS', 'FedEx', 'UPS', 'Amazon', 'Other'] },
+        { name: 'expectedDelivery', label: 'Expected Delivery', type: 'date' },
+        { name: 'status', label: 'Status', type: 'select', options: ['Ordered', 'Shipped', 'In Transit', 'Out for Delivery', 'Delivered'] },
+      ]}
+      renderItem={(item, onDelete, onEdit) => {
+        const trackingUrl = getTrackingUrl(item.carrier, item.trackingNumber);
+        const statusColor = item.status === 'Delivered' ? 'var(--success)' : 
+                           item.status === 'Out for Delivery' ? 'var(--warning)' : 
+                           'var(--gray)';
+        
+        return (
+          <div className="list-item">
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: '600', marginBottom: '4px' }}>{item.description}</div>
+              <div className="text-small text-muted" style={{ marginBottom: '4px' }}>
+                {item.carrier}
+                {item.trackingNumber && ` • ${item.trackingNumber}`}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span 
+                  className="text-small" 
+                  style={{ 
+                    color: statusColor, 
+                    fontWeight: '600',
+                    padding: '2px 8px',
+                    background: `${statusColor}20`,
+                    borderRadius: '4px',
+                    fontSize: '11px'
+                  }}
+                >
+                  {item.status}
+                </span>
+                {item.expectedDelivery && (
+                  <span className="text-small text-muted">
+                    Expected: {new Date(item.expectedDelivery).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              {trackingUrl && (
+                <a
+                  href={trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-small"
+                  style={{ 
+                    color: 'var(--primary)', 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    textDecoration: 'none'
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink size={12} />
+                  Track Package on {item.carrier}
+                </a>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button 
+                className="btn btn-outline btn-sm" 
+                onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(); }}
+                title="Edit package"
+              >
+                Edit
+              </button>
+              <button 
+                className="btn btn-danger btn-sm" 
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                title="Delete package"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
-        </div>
-        <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(); }}><Trash2 size={16} /></button>
-      </div>
-    )}
-  />
-);
+        );
+      }}
+    />
+  );
+};
 
 export const Subscriptions = () => (
   <GenericFeature
