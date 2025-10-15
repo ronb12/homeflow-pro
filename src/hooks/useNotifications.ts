@@ -36,14 +36,24 @@ export const useNotifications = () => {
   };
 
   const checkBillDueNotifications = async (userId: string, bills: any[]) => {
+    console.log(`🔍 Checking ${bills.length} bills for due date notifications...`);
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to start of day for accurate comparison
     const threeDaysFromNow = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
     
     for (const bill of bills) {
-      if (!bill.dueDate || bill.paid) continue;
+      console.log(`   📋 Bill: "${bill.name}" - DueDate: ${bill.dueDate}, Paid: ${bill.paid}`);
+      
+      if (!bill.dueDate || bill.paid) {
+        console.log(`      ⏭️  Skipped (${!bill.dueDate ? 'no due date' : 'already paid'})`);
+        continue;
+      }
       
       const dueDate = new Date(bill.dueDate);
+      dueDate.setHours(0, 0, 0, 0); // Reset to start of day
       const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      console.log(`      ⏰ Days until due: ${daysUntilDue}`);
       
       // Check if notification already exists for this bill
       const q = query(
@@ -57,6 +67,7 @@ export const useNotifications = () => {
       if (existing.empty) {
         // Bill due in 3 days or less
         if (daysUntilDue <= 3 && daysUntilDue >= 0) {
+          console.log(`   ✅ Creating bill notification (${daysUntilDue} days until due)...`);
           await createNotification(userId, {
             title: `Bill Due ${daysUntilDue === 0 ? 'Today' : `in ${daysUntilDue} day${daysUntilDue > 1 ? 's' : ''}`}`,
             message: `${bill.name} - $${bill.amount.toFixed(2)} is due on ${dueDate.toLocaleDateString()}`,
@@ -82,13 +93,23 @@ export const useNotifications = () => {
   };
 
   const checkTaskDueNotifications = async (userId: string, tasks: any[]) => {
+    console.log(`🔍 Checking ${tasks.length} tasks for due date notifications...`);
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
     for (const task of tasks) {
-      if (!task.dueDate || task.completed) continue;
+      console.log(`   📋 Task: "${task.title}" - DueDate: ${task.dueDate}, Completed: ${task.completed}`);
+      
+      if (!task.dueDate || task.completed) {
+        console.log(`      ⏭️  Skipped (${!task.dueDate ? 'no due date' : 'already completed'})`);
+        continue;
+      }
       
       const dueDate = new Date(task.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
       const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      console.log(`      ⏰ Days until due: ${daysUntilDue}`);
       
       // Check if notification already exists
       const q = query(
@@ -102,6 +123,7 @@ export const useNotifications = () => {
       if (existing.empty) {
         // Task due today
         if (daysUntilDue === 0) {
+          console.log(`   ✅ Creating task notification (due today)...`);
           await createNotification(userId, {
             title: '📋 Task Due Today',
             message: `"${task.title}" is due today`,

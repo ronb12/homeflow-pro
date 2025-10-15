@@ -107,12 +107,15 @@ export const Dashboard = () => {
         const packages = packagesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
         // Run notification checks (async in background)
+        console.log('🤖 Running automatic notification checks...');
         Promise.all([
           checkBillDueNotifications(user.uid, bills),
           checkTaskDueNotifications(user.uid, tasksData),
           checkPasswordExpirationNotifications(user.uid, passwords),
           checkPackageDeliveredNotifications(user.uid, packages),
-        ]).catch(err => console.error('Error checking notifications:', err));
+        ]).then(() => {
+          console.log('✅ Notification checks complete');
+        }).catch(err => console.error('❌ Error checking notifications:', err));
         
       } catch (error) {
         console.error('Error fetching stats:', error);
