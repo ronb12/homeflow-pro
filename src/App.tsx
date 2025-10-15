@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import { useStore } from './store';
@@ -10,7 +11,7 @@ import { Dashboard, Tasks, Calendar, Shopping, Budget, Bills } from './component
 import { Inventory, Meals, Recipes, Family, Chores, Documents, Contacts, Maintenance, Warranties, Pets, Plants, Weather, Notes, Vehicles, Insurance, Passwords, Guests, Energy, Devices, Packages, Subscriptions, Goals, Notifications } from './components/AllFeatures';
 
 const App = () => {
-  const { user, setUser, currentView } = useStore();
+  const { user, setUser } = useStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -24,68 +25,65 @@ const App = () => {
     return () => unsubscribe();
   }, [setUser]);
 
-  if (!user) {
-    return (
-      <>
-        <Login />
-        <PWAInstall />
-      </>
-    );
-  }
-
-  const renderView = () => {
-    switch (currentView) {
-      case 'dashboard': return <Dashboard />;
-      case 'tasks': return <Tasks />;
-      case 'calendar': return <Calendar />;
-      case 'shopping': return <Shopping />;
-      case 'budget': return <Budget />;
-      case 'bills': return <Bills />;
-      case 'inventory': return <Inventory />;
-      case 'meals': return <Meals />;
-      case 'recipes': return <Recipes />;
-      case 'family': return <Family />;
-      case 'chores': return <Chores />;
-      case 'documents': return <Documents />;
-      case 'contacts': return <Contacts />;
-      case 'maintenance': return <Maintenance />;
-      case 'warranties': return <Warranties />;
-      case 'pets': return <Pets />;
-      case 'plants': return <Plants />;
-      case 'weather': return <Weather />;
-      case 'notes': return <Notes />;
-      case 'vehicles': return <Vehicles />;
-      case 'insurance': return <Insurance />;
-      case 'passwords': return <Passwords />;
-      case 'guests': return <Guests />;
-      case 'energy': return <Energy />;
-      case 'devices': return <Devices />;
-      case 'packages': return <Packages />;
-      case 'subscriptions': return <Subscriptions />;
-      case 'goals': return <Goals />;
-      case 'notifications': return <Notifications />;
-      default: return <Dashboard />;
-    }
-  };
-
   return (
-    <>
-      <div style={{ display: 'flex' }}>
-        <Sidebar />
-        <main style={{
-          marginLeft: '280px',
-          flex: 1,
-          padding: '32px',
-          minHeight: '100vh',
-          background: 'var(--light)'
-        }}>
-          <div className="container">
-            {renderView()}
+    <BrowserRouter>
+      {!user ? (
+        <>
+          <Login />
+          <PWAInstall />
+        </>
+      ) : (
+        <>
+          <div style={{ display: 'flex' }}>
+            <Sidebar />
+            <main style={{
+              marginLeft: '280px',
+              flex: 1,
+              padding: '32px',
+              minHeight: '100vh',
+              background: 'var(--light)'
+            }}>
+              <div className="container">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/tasks" element={<Tasks />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/shopping" element={<Shopping />} />
+                  <Route path="/budget" element={<Budget />} />
+                  <Route path="/bills" element={<Bills />} />
+                  <Route path="/inventory" element={<Inventory />} />
+                  <Route path="/meals" element={<Meals />} />
+                  <Route path="/recipes" element={<Recipes />} />
+                  <Route path="/family" element={<Family />} />
+                  <Route path="/chores" element={<Chores />} />
+                  <Route path="/documents" element={<Documents />} />
+                  <Route path="/contacts" element={<Contacts />} />
+                  <Route path="/maintenance" element={<Maintenance />} />
+                  <Route path="/warranties" element={<Warranties />} />
+                  <Route path="/pets" element={<Pets />} />
+                  <Route path="/plants" element={<Plants />} />
+                  <Route path="/weather" element={<Weather />} />
+                  <Route path="/notes" element={<Notes />} />
+                  <Route path="/vehicles" element={<Vehicles />} />
+                  <Route path="/insurance" element={<Insurance />} />
+                  <Route path="/passwords" element={<Passwords />} />
+                  <Route path="/guests" element={<Guests />} />
+                  <Route path="/energy" element={<Energy />} />
+                  <Route path="/devices" element={<Devices />} />
+                  <Route path="/packages" element={<Packages />} />
+                  <Route path="/subscriptions" element={<Subscriptions />} />
+                  <Route path="/goals" element={<Goals />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </div>
+            </main>
           </div>
-        </main>
-      </div>
-      <PWAInstall />
-    </>
+          <PWAInstall />
+        </>
+      )}
+    </BrowserRouter>
   );
 };
 

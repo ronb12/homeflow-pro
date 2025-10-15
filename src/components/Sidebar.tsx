@@ -5,7 +5,7 @@ import {
   Cloud, StickyNote, Car, CreditCard, Lock, UserPlus,
   Zap, Smartphone, Package, Repeat, Target, Bell, LogOut
 } from 'lucide-react';
-import { useStore } from '../store';
+import { Link, useLocation } from 'react-router-dom';
 import { logout } from '../utils/auth';
 
 const menuItems = [
@@ -41,7 +41,8 @@ const menuItems = [
 ];
 
 export const Sidebar = () => {
-  const { currentView, setCurrentView } = useStore();
+  const location = useLocation();
+  const currentPath = location.pathname.substring(1) || 'dashboard';
 
   const handleLogout = async () => {
     await logout();
@@ -90,20 +91,18 @@ export const Sidebar = () => {
       <nav style={{ flex: 1, padding: '16px 0' }}>
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentView === item.id;
+          const isActive = currentPath === item.id;
           
           return (
-            <button
+            <Link
               key={item.id}
-              onClick={() => setCurrentView(item.id)}
+              to={`/${item.id}`}
               style={{
                 width: '100%',
                 padding: '12px 24px',
                 background: isActive ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                border: 'none',
                 color: 'white',
-                textAlign: 'left',
-                cursor: 'pointer',
+                textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
@@ -120,7 +119,7 @@ export const Sidebar = () => {
             >
               <Icon size={18} />
               {item.label}
-            </button>
+            </Link>
           );
         })}
       </nav>
