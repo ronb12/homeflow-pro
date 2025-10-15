@@ -77,7 +77,7 @@ export const Recipes = () => (
           <div className="text-small text-muted">
             {item.category} • Prep: {item.prepTime}min • Cook: {item.cookTime}min • Serves: {item.servings}
           </div>
-          {item.ingredients && (
+          {item.ingredients && typeof item.ingredients === 'string' && item.ingredients.trim() && (
             <div className="text-small" style={{ marginTop: '8px', fontStyle: 'italic' }}>
               📝 {item.ingredients.split('\n').filter((l: string) => l.trim()).length} ingredients
             </div>
