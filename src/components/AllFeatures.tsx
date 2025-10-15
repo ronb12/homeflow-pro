@@ -12,13 +12,17 @@ export const Inventory = () => (
       { name: 'category', label: 'Category', type: 'select', options: ['Kitchen', 'Electronics', 'Furniture', 'Tools', 'Other'] },
       { name: 'location', label: 'Location', type: 'text' },
       { name: 'quantity', label: 'Quantity', type: 'number' },
+      { name: 'serialNumber', label: 'Serial Number (if applicable)', type: 'text' },
       { name: 'purchaseDate', label: 'Purchase Date', type: 'date' },
     ]}
     renderItem={(item, onDelete, onEdit) => (
       <div className="list-item">
         <div style={{ flex: 1, cursor: 'pointer' }} onClick={onEdit}>
           <div style={{ fontWeight: '600' }}>{item.name}</div>
-          <div className="text-small text-muted">{item.category} • {item.location} • Qty: {item.quantity}</div>
+          <div className="text-small text-muted">
+            {item.category} • {item.location} • Qty: {item.quantity}
+            {item.serialNumber && ` • SN: ${item.serialNumber}`}
+          </div>
         </div>
         <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(); }}><Trash2 size={16} /></button>
       </div>
@@ -35,12 +39,16 @@ export const Meals = () => (
       { name: 'name', label: 'Meal Name', type: 'text', required: true },
       { name: 'date', label: 'Date', type: 'date' },
       { name: 'mealType', label: 'Type', type: 'select', options: ['breakfast', 'lunch', 'dinner', 'snack'] },
+      { name: 'servings', label: 'Number of People', type: 'number' },
     ]}
     renderItem={(item, onDelete, onEdit) => (
       <div className="list-item">
         <div style={{ flex: 1, cursor: 'pointer' }} onClick={onEdit}>
           <div style={{ fontWeight: '600' }}>{item.name}</div>
-          <div className="text-small text-muted">{new Date(item.date).toLocaleDateString()} • {item.mealType}</div>
+          <div className="text-small text-muted">
+            {new Date(item.date).toLocaleDateString()} • {item.mealType}
+            {item.servings && ` • ${item.servings} people`}
+          </div>
         </div>
         <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(); }}><Trash2 size={16} /></button>
       </div>
