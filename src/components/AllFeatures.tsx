@@ -391,6 +391,7 @@ export const Vehicles = () => (
       { name: 'make', label: 'Make', type: 'text', required: true },
       { name: 'model', label: 'Model', type: 'text' },
       { name: 'year', label: 'Year', type: 'number' },
+      { name: 'licensePlate', label: 'License Plate #', type: 'text' },
       { name: 'mileage', label: 'Current Mileage', type: 'number' },
       { name: 'nextService', label: 'Next Service Date', type: 'date' },
     ]}
@@ -398,7 +399,10 @@ export const Vehicles = () => (
       <div className="list-item">
         <div style={{ flex: 1, cursor: 'pointer' }} onClick={onEdit}>
           <div style={{ fontWeight: '600' }}>{item.year} {item.make} {item.model}</div>
-          <div className="text-small text-muted">{item.mileage?.toLocaleString()} miles</div>
+          <div className="text-small text-muted">
+            {item.mileage?.toLocaleString()} miles
+            {item.licensePlate && ` • 🚗 ${item.licensePlate}`}
+          </div>
         </div>
         <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(); }}><Trash2 size={16} /></button>
       </div>
