@@ -248,6 +248,7 @@ export const Warranties = () => (
     icon={<Shield size={24} />}
     fields={[
       { name: 'product', label: 'Product Name', type: 'text', required: true },
+      { name: 'warrantyNumber', label: 'Warranty Number (optional)', type: 'text' },
       { name: 'purchaseDate', label: 'Purchase Date', type: 'date' },
       { name: 'expiryDate', label: 'Warranty Expiry', type: 'date' },
       { name: 'store', label: 'Store/Vendor', type: 'text' },
@@ -256,7 +257,10 @@ export const Warranties = () => (
       <div className="list-item">
         <div style={{ flex: 1, cursor: 'pointer' }} onClick={onEdit}>
           <div style={{ fontWeight: '600' }}>{item.product}</div>
-          <div className="text-small text-muted">Expires: {new Date(item.expiryDate).toLocaleDateString()} • {item.store}</div>
+          <div className="text-small text-muted">
+            Expires: {new Date(item.expiryDate).toLocaleDateString()} • {item.store}
+            {item.warrantyNumber && ` • #${item.warrantyNumber}`}
+          </div>
         </div>
         <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(); }}><Trash2 size={16} /></button>
       </div>
