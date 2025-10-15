@@ -8,7 +8,8 @@ import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { PWAInstall } from './components/PWAInstall';
 import { Dashboard, Tasks, Calendar, Shopping, Budget, Bills } from './components/FeaturesList';
-import { Inventory, Meals, Recipes, Family, Chores, Documents, Contacts, Maintenance, Warranties, Pets, Plants, QuickLinks, Notes, Vehicles, Insurance, Passwords, Guests, Energy, Devices, Packages, Subscriptions, Goals, Notifications } from './components/AllFeatures';
+import { Inventory, Meals, Recipes, Family, Chores, Documents, Contacts, Maintenance, Warranties, Pets, Plants, QuickLinks, Notes, Vehicles, Insurance, Guests, Energy, Devices, Packages, Subscriptions, Goals, Notifications } from './components/AllFeatures';
+import { PasswordManager } from './components/PasswordManager';
 
 const App = () => {
   const { user, setUser } = useStore();
@@ -212,7 +213,7 @@ const App = () => {
               <div style={{ display: 'flex' }}>
                 <Sidebar />
                 <main style={{ marginLeft: '280px', flex: 1, padding: '32px', minHeight: '100vh', background: 'var(--light)' }}>
-                  <div className="container"><Passwords /></div>
+                  <div className="container"><PasswordManager /></div>
                 </main>
               </div>
             } />
