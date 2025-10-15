@@ -181,7 +181,7 @@ export const GenericFeature = ({
                     type={field.type}
                     className="input"
                     value={formData[field.name] || ''}
-                    onChange={e => setFormData({ ...formData, [field.name]: field.type === 'number' ? parseFloat(e.target.value) : e.target.value })}
+                    onChange={e => setFormData({ ...formData, [field.name]: field.type === 'number' ? (e.target.value === '' ? 0 : parseFloat(e.target.value)) : e.target.value })}
                   />
                 )}
               </div>

@@ -262,7 +262,7 @@ export const Budget = () => {
             <div className="form-group">
               <label className="form-label">Amount *</label>
               <input type="number" step="0.01" className="input" value={newExpense.amount}
-                onChange={e => setNewExpense({ ...newExpense, amount: parseFloat(e.target.value) })} />
+                onChange={e => setNewExpense({ ...newExpense, amount: e.target.value === '' ? 0 : parseFloat(e.target.value) })} />
             </div>
             <div className="form-group">
               <label className="form-label">Category</label>

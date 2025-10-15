@@ -107,7 +107,7 @@ export const Shopping = () => {
             <div className="form-group">
               <label className="form-label">Quantity</label>
               <input type="number" className="input" value={newItem.quantity}
-                onChange={e => setNewItem({ ...newItem, quantity: parseInt(e.target.value) })} />
+                onChange={e => setNewItem({ ...newItem, quantity: e.target.value === '' ? 0 : parseInt(e.target.value) })} />
             </div>
             <div className="form-group">
               <label className="form-label">Category</label>

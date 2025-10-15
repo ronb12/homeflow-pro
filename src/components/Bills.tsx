@@ -99,7 +99,7 @@ export const Bills = () => {
             <div className="form-group">
               <label className="form-label">Amount *</label>
               <input type="number" step="0.01" className="input" value={newBill.amount}
-                onChange={e => setNewBill({ ...newBill, amount: parseFloat(e.target.value) })} />
+                onChange={e => setNewBill({ ...newBill, amount: e.target.value === '' ? 0 : parseFloat(e.target.value) })} />
             </div>
             <div className="form-group">
               <label className="form-label">Due Date *</label>
