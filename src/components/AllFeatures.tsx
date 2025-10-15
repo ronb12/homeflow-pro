@@ -64,11 +64,13 @@ export const Recipes = () => (
     fields={[
       { name: 'name', label: 'Recipe Name', type: 'text', required: true },
       { name: 'category', label: 'Category', type: 'select', options: ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Snack'] },
+      { name: 'sourceUrl', label: 'Recipe Source URL (optional)', type: 'text' },
       { name: 'prepTime', label: 'Prep Time (min)', type: 'number' },
       { name: 'cookTime', label: 'Cook Time (min)', type: 'number' },
       { name: 'servings', label: 'Servings', type: 'number' },
       { name: 'ingredients', label: 'Ingredients (one per line)', type: 'textarea' },
       { name: 'instructions', label: 'Instructions', type: 'textarea' },
+      { name: 'notes', label: 'Personal Notes (optional)', type: 'textarea' },
     ]}
     renderItem={(item, onDelete, onEdit) => (
       <div className="list-item">
@@ -80,6 +82,23 @@ export const Recipes = () => (
           {item.ingredients && typeof item.ingredients === 'string' && item.ingredients.trim() && (
             <div className="text-small" style={{ marginTop: '8px', fontStyle: 'italic' }}>
               📝 {item.ingredients.split('\n').filter((l: string) => l.trim()).length} ingredients
+            </div>
+          )}
+          {item.sourceUrl && (
+            <a 
+              href={item.sourceUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-small"
+              style={{ color: 'var(--primary)', marginTop: '4px', display: 'inline-block' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              📎 View Original Recipe
+            </a>
+          )}
+          {item.notes && (
+            <div className="text-small" style={{ marginTop: '4px', color: 'var(--warning)', fontStyle: 'italic' }}>
+              💡 {item.notes.substring(0, 60)}{item.notes.length > 60 ? '...' : ''}
             </div>
           )}
         </div>
