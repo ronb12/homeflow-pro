@@ -2,11 +2,22 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useStore } from '../store';
+import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { CheckSquare, Calendar, ShoppingCart, DollarSign, TrendingUp, AlertCircle, Clock, CheckCircle } from 'lucide-react';
+import { CheckSquare, Calendar, ShoppingCart, DollarSign, TrendingUp, AlertCircle, Clock, CheckCircle, Bell } from 'lucide-react';
+import { useNotifications } from '../hooks/useNotifications';
+import { requestNotificationPermission } from '../utils/pushNotifications';
 
 export const Dashboard = () => {
   const { user } = useStore();
+  const {
+    checkBillDueNotifications,
+    checkTaskDueNotifications,
+    checkPasswordExpirationNotifications,
+    checkPackageDeliveredNotifications,
+    checkBudgetWarningNotifications
+  } = useNotifications();
+  
   const [stats, setStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -19,6 +30,18 @@ export const Dashboard = () => {
 
   useEffect(() => {
     if (!user) return;
+    
+    // Request notification permission on first load
+    const hasAskedPermission = localStorage.getItem('notification-permission-asked');
+    if (!hasAskedPermission) {
+      setTimeout(async () => {
+        const granted = await requestNotificationPermission();
+        localStorage.setItem('notification-permission-asked', 'true');
+        if (granted) {
+          console.log('✅ Browser notifications enabled');
+        }
+      }, 3000); // Ask after 3 seconds
+    }
     
     const fetchStats = async () => {
       try {
@@ -68,6 +91,29 @@ export const Dashboard = () => {
           monthlyExpenses: totalExpenses,
           activeGoals: goalsSnap.size,
         });
+        
+        // Auto-check and create notifications
+        const bills = billsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const tasksData = tasksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Fetch passwords for expiration check
+        const passwordsQuery = query(collection(db, 'passwords'), where('userId', '==', user.uid));
+        const passwordsSnap = await getDocs(passwordsQuery);
+        const passwords = passwordsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Fetch packages for delivery check
+        const packagesQuery = query(collection(db, 'packages'), where('userId', '==', user.uid));
+        const packagesSnap = await getDocs(packagesQuery);
+        const packages = packagesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Run notification checks (async in background)
+        Promise.all([
+          checkBillDueNotifications(user.uid, bills),
+          checkTaskDueNotifications(user.uid, tasksData),
+          checkPasswordExpirationNotifications(user.uid, passwords),
+          checkPackageDeliveredNotifications(user.uid, packages),
+        ]).catch(err => console.error('Error checking notifications:', err));
+        
       } catch (error) {
         console.error('Error fetching stats:', error);
       } finally {
@@ -76,7 +122,7 @@ export const Dashboard = () => {
     };
 
     fetchStats();
-  }, [user]);
+  }, [user, checkBillDueNotifications, checkTaskDueNotifications, checkPasswordExpirationNotifications, checkPackageDeliveredNotifications]);
 
   const expenseData = [
     { name: 'Food', value: 450 },
@@ -256,6 +302,126 @@ export const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Recent Notifications Widget */}
+      <RecentNotificationsWidget />
+    </div>
+  );
+};
+
+// Recent Notifications Widget Component
+const RecentNotificationsWidget = () => {
+  const { user } = useStore();
+  const [notifications, setNotifications] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchRecentNotifications = async () => {
+      try {
+        const q = query(
+          collection(db, 'notifications'),
+          where('userId', '==', user.uid),
+          where('read', '==', false)
+        );
+        const snapshot = await getDocs(q);
+        let notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort by priority and date
+        notifs.sort((a: any, b: any) => {
+          const priorityOrder = { 'Urgent': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+          const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
+          const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
+          if (aPriority !== bPriority) return bPriority - aPriority;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        setNotifications(notifs.slice(0, 5)); // Show top 5
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    
+    fetchRecentNotifications();
+  }, [user]);
+  
+  if (notifications.length === 0) return null;
+  
+  const typeEmojis: Record<string, string> = {
+    bill: '💵',
+    task: '📋',
+    package: '📦',
+    password: '🔐',
+    budget: '💰',
+    general: '🔔'
+  };
+  
+  return (
+    <div className="card" style={{ marginTop: '32px' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '16px',
+        paddingBottom: '16px',
+        borderBottom: '1px solid var(--border)'
+      }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Bell size={20} />
+          Recent Alerts
+          <span style={{ 
+            fontSize: '12px', 
+            background: 'var(--danger)', 
+            color: 'white',
+            padding: '2px 8px',
+            borderRadius: '10px',
+            fontWeight: '600'
+          }}>
+            {notifications.length}
+          </span>
+        </h3>
+        <Link 
+          to="/notifications"
+          style={{
+            fontSize: '14px',
+            color: 'var(--primary)',
+            textDecoration: 'none',
+            fontWeight: '600'
+          }}
+        >
+          View All →
+        </Link>
+      </div>
+      
+      {notifications.map(notif => {
+        const priorityColor = 
+          notif.priority === 'Urgent' ? 'var(--danger)' :
+          notif.priority === 'High' ? '#f59e0b' :
+          notif.priority === 'Medium' ? 'var(--primary)' :
+          'var(--gray)';
+        
+        return (
+          <div 
+            key={notif.id}
+            style={{
+              padding: '12px',
+              borderLeft: `4px solid ${priorityColor}`,
+              background: 'rgba(59, 130, 246, 0.02)',
+              borderRadius: '8px',
+              marginBottom: '8px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'start', gap: '12px' }}>
+              <span style={{ fontSize: '24px' }}>{typeEmojis[notif.type] || '🔔'}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: '600', marginBottom: '4px' }}>{notif.title}</div>
+                <div style={{ fontSize: '13px', color: 'var(--gray)' }}>{notif.message}</div>
+                <div style={{ fontSize: '11px', color: priorityColor, fontWeight: '600', marginTop: '4px' }}>
+                  {notif.priority} Priority
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

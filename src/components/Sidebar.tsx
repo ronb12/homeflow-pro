@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, CheckSquare, Calendar, ShoppingCart, DollarSign,
   FileText, Home as HomeIcon, UtensilsCrossed, BookOpen, Users,
@@ -6,6 +7,9 @@ import {
   Zap, Smartphone, Package, Repeat, Target, Bell, LogOut
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useStore } from '../store';
 import { logout } from '../utils/auth';
 
 const menuItems = [
@@ -41,8 +45,34 @@ const menuItems = [
 ];
 
 export const Sidebar = () => {
+  const { user } = useStore();
   const location = useLocation();
   const currentPath = location.pathname.substring(1) || 'dashboard';
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchUnreadCount = async () => {
+      try {
+        const q = query(
+          collection(db, 'notifications'),
+          where('userId', '==', user.uid),
+          where('read', '==', false)
+        );
+        const snapshot = await getDocs(q);
+        setUnreadCount(snapshot.size);
+      } catch (error) {
+        console.error('Error fetching notification count:', error);
+      }
+    };
+    
+    fetchUnreadCount();
+    
+    // Refresh count every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [user, currentPath]); // Refresh when navigating
 
   const handleLogout = async () => {
     await logout();
@@ -119,6 +149,21 @@ export const Sidebar = () => {
             >
               <Icon size={18} />
               {item.label}
+              {item.id === 'notifications' && unreadCount > 0 && (
+                <span style={{
+                  marginLeft: 'auto',
+                  background: 'var(--danger)',
+                  color: 'white',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  padding: '2px 6px',
+                  borderRadius: '10px',
+                  minWidth: '20px',
+                  textAlign: 'center'
+                }}>
+                  {unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}
