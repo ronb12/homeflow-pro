@@ -1,6 +1,6 @@
 // Simplified implementations for remaining features
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useStore } from '../store';
 import { GenericFeature } from './GenericFeature';
@@ -707,6 +707,7 @@ export const Notifications = () => {
   const { markAllAsRead } = useNotifications();
   const [items, setItems] = useState<any[]>([]);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     if (!user) return;
@@ -715,15 +716,21 @@ export const Notifications = () => {
   
   const fetchNotifications = async () => {
     if (!user) return;
-    const q = query(
-      collection(db, 'notifications'),
-      where('userId', '==', user.uid)
-    );
-    const snapshot = await getDocs(q);
-    const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    // Sort by created date, newest first
-    notifs.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    setItems(notifs);
+    try {
+      const q = query(
+        collection(db, 'notifications'),
+        where('userId', '==', user.uid)
+      );
+      const snapshot = await getDocs(q);
+      const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort by created date, newest first
+      notifs.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setItems(notifs);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleMarkAllRead = async () => {
@@ -731,16 +738,50 @@ export const Notifications = () => {
     await markAllAsRead(user.uid);
     fetchNotifications();
   };
+
+  const toggleRead = async (item: any) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'notifications', item.id), { read: !item.read });
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error updating notification:', error);
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'notifications', id));
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
   
   const displayItems = showUnreadOnly ? items.filter((i: any) => !i.read) : items;
   const unreadCount = items.filter((i: any) => !i.read).length;
+  
+  if (loading) {
+    return (
+      <div className="card">
+        <div className="card-header">
+          <Bell size={20} />
+          <h2>System Notifications</h2>
+        </div>
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <div className="loading">Loading notifications...</div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div>
       <div className="card-header" style={{ marginBottom: '24px' }}>
         <h2 className="card-title">
           <Bell size={24} />
-          Notification Center
+          System Notifications
           {unreadCount > 0 && (
             <span style={{ 
               fontSize: '12px', 
@@ -773,74 +814,100 @@ export const Notifications = () => {
         </div>
       </div>
       
-      <GenericFeature
-        collectionName="notifications"
-        title=""
-        icon={<span></span>}
-        fields={[
-          { name: 'title', label: 'Title', type: 'text', required: true },
-          { name: 'message', label: 'Message', type: 'textarea' },
-          { name: 'priority', label: 'Priority', type: 'select', options: ['Low', 'Medium', 'High', 'Urgent'] },
-          { name: 'type', label: 'Type', type: 'select', options: ['general', 'bill', 'task', 'package', 'password', 'budget'] },
-          { name: 'read', label: 'Mark as Read', type: 'checkbox' },
-        ]}
-        renderItem={(item, onDelete, onEdit) => {
-          const typeEmojis: Record<string, string> = {
-            bill: '💵',
-            task: '📋',
-            package: '📦',
-            password: '🔐',
-            budget: '💰',
-            general: '🔔'
-          };
-          
-          const priorityColor = 
-            item.priority === 'Urgent' ? 'var(--danger)' :
-            item.priority === 'High' ? '#f59e0b' :
-            item.priority === 'Medium' ? 'var(--primary)' :
-            'var(--gray)';
-          
-          return (
-            <div 
-              className="list-item" 
-              style={{ 
-                opacity: item.read ? 0.6 : 1,
-                borderLeft: `4px solid ${item.read ? 'transparent' : priorityColor}`,
-                background: item.read ? 'transparent' : 'rgba(59, 130, 246, 0.02)'
-              }}
-            >
-              <div style={{ flex: 1, cursor: 'pointer' }} onClick={onEdit}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '20px' }}>{typeEmojis[item.type] || '🔔'}</span>
-                  <div style={{ fontWeight: '600', flex: 1 }}>{item.title}</div>
-                  {!item.read && (
-                    <span style={{ 
-                      fontSize: '10px', 
-                      background: 'var(--primary)', 
-                      color: 'white',
-                      padding: '2px 6px',
-                      borderRadius: '8px',
-                      fontWeight: '600'
-                    }}>
-                      NEW
-                    </span>
-                  )}
-                </div>
-                <div className="text-small text-muted" style={{ marginBottom: '4px' }}>{item.message}</div>
-                <div className="text-small" style={{ color: priorityColor, fontWeight: '600' }}>
-                  {item.priority} Priority
-                  {item.createdAt && (
-                    <span style={{ color: 'var(--gray)', marginLeft: '8px', fontWeight: 'normal' }}>
-                      • {new Date(item.createdAt).toLocaleString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(); }}><Trash2 size={16} /></button>
+      <div className="card">
+        {displayItems.length === 0 ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--gray)' }}>
+            <Bell size={48} style={{ marginBottom: '16px', opacity: 0.3 }} />
+            <h3>No notifications</h3>
+            <p>You're all caught up! System notifications will appear here automatically.</p>
+            <div style={{ marginTop: '16px', fontSize: '14px', color: 'var(--gray)' }}>
+              <p>Notifications are created automatically for:</p>
+              <ul style={{ textAlign: 'left', display: 'inline-block', marginTop: '8px' }}>
+                <li>💵 Bills due soon or overdue</li>
+                <li>📋 Tasks due today or overdue</li>
+                <li>🔐 Passwords expiring soon</li>
+                <li>📦 Package delivery updates</li>
+                <li>💰 Budget warnings</li>
+              </ul>
             </div>
-          );
-        }}
-      />
+          </div>
+        ) : (
+          <div className="list">
+            {displayItems.map((item: any) => {
+              const typeEmojis: Record<string, string> = {
+                bill: '💵',
+                task: '📋',
+                package: '📦',
+                password: '🔐',
+                budget: '💰',
+                general: '🔔'
+              };
+              
+              const priorityColor = 
+                item.priority === 'Urgent' ? 'var(--danger)' :
+                item.priority === 'High' ? '#f59e0b' :
+                item.priority === 'Medium' ? 'var(--primary)' :
+                'var(--gray)';
+              
+              return (
+                <div 
+                  key={item.id}
+                  className="list-item" 
+                  style={{ 
+                    opacity: item.read ? 0.6 : 1,
+                    borderLeft: `4px solid ${item.read ? 'transparent' : priorityColor}`,
+                    background: item.read ? 'transparent' : 'rgba(59, 130, 246, 0.02)'
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '20px' }}>{typeEmojis[item.type] || '🔔'}</span>
+                      <div style={{ fontWeight: '600', flex: 1 }}>{item.title}</div>
+                      {!item.read && (
+                        <span style={{ 
+                          fontSize: '10px', 
+                          background: 'var(--primary)', 
+                          color: 'white',
+                          padding: '2px 6px',
+                          borderRadius: '8px',
+                          fontWeight: '600'
+                        }}>
+                          NEW
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-small text-muted" style={{ marginBottom: '4px' }}>{item.message}</div>
+                    <div className="text-small" style={{ color: priorityColor, fontWeight: '600' }}>
+                      {item.priority} Priority
+                      {item.createdAt && (
+                        <span style={{ color: 'var(--gray)', marginLeft: '8px', fontWeight: 'normal' }}>
+                          • {new Date(item.createdAt).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button 
+                      className="btn btn-outline btn-sm" 
+                      onClick={() => toggleRead(item)}
+                      title={item.read ? "Mark as unread" : "Mark as read"}
+                    >
+                      {item.read ? 'Mark Unread' : 'Mark Read'}
+                    </button>
+                    <button 
+                      className="btn btn-danger btn-sm" 
+                      onClick={() => deleteNotification(item.id)}
+                      title="Delete notification"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
