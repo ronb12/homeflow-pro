@@ -441,6 +441,7 @@ export const Passwords = () => (
     icon={<Lock size={24} />}
     fields={[
       { name: 'service', label: 'Service/Website', type: 'text', required: true },
+      { name: 'websiteUrl', label: 'Website URL (optional)', type: 'text' },
       { name: 'username', label: 'Username/Email', type: 'text' },
       { name: 'password', label: 'Password', type: 'text' },
       { name: 'notes', label: 'Notes', type: 'textarea' },
@@ -450,6 +451,18 @@ export const Passwords = () => (
         <div style={{ flex: 1, cursor: 'pointer' }} onClick={onEdit}>
           <div style={{ fontWeight: '600' }}>{item.service}</div>
           <div className="text-small text-muted">{item.username}</div>
+          {item.websiteUrl && (
+            <a 
+              href={item.websiteUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-small"
+              style={{ color: 'var(--primary)', marginTop: '4px', display: 'inline-block' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              🔗 Open Website
+            </a>
+          )}
         </div>
         <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(); }}><Trash2 size={16} /></button>
       </div>
