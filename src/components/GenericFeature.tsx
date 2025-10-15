@@ -88,12 +88,16 @@ export const GenericFeature = ({
   const saveItem = async () => {
     if (!user) return;
     try {
+      console.log(`💾 Saving ${collectionName}:`, JSON.stringify(formData, null, 2));
+      
       if (editingItem) {
         // Update existing item
         await updateDoc(doc(db, collectionName, editingItem.id), formData);
       } else {
         // Add new item
-        await addDoc(collection(db, collectionName), { ...formData, userId: user.uid, createdAt: new Date().toISOString() });
+        const dataToSave = { ...formData, userId: user.uid, createdAt: new Date().toISOString() };
+        console.log(`📝 Data being saved to Firebase:`, JSON.stringify(dataToSave, null, 2));
+        await addDoc(collection(db, collectionName), dataToSave);
       }
       setShowModal(false);
       setEditingItem(null);

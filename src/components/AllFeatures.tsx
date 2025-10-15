@@ -577,6 +577,15 @@ export const Packages = () => {
                            item.status === 'Out for Delivery' ? 'var(--warning)' : 
                            'var(--gray)';
         
+        // Debug logging
+        if (item.trackingNumber && !trackingUrl) {
+          console.log(`⚠️ Package "${item.description}" has tracking# but no URL`, {
+            carrier: item.carrier,
+            trackingNumber: item.trackingNumber,
+            trackingUrl
+          });
+        }
+        
         return (
           <div className="list-item">
             <div style={{ flex: 1 }}>
