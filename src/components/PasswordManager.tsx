@@ -21,17 +21,24 @@ export const PasswordManager = () => {
   const { user } = useStore();
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showMasterPassword, setShowMasterPassword] = useState(false);
   const [masterPassword, setMasterPassword] = useState('');
   const [masterPasswordSet, setMasterPasswordSet] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, string>>({});
+  const [showChangeMasterPassword, setShowChangeMasterPassword] = useState(false);
+  const [oldMasterPassword, setOldMasterPassword] = useState('');
+  const [newMasterPassword, setNewMasterPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     service: '',
     websiteUrl: '',
     username: '',
     password: '',
-    notes: ''
+    notes: '',
+    expiresAt: ''
   });
 
   useEffect(() => {
@@ -112,20 +119,14 @@ export const PasswordManager = () => {
           username: formData.username,
           encryptedPassword: encrypted,
           notes: formData.notes,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          expiresAt: formData.expiresAt || null
         });
       }
       
-      const password = prompt('Enter master password to save:');
-      if (!password || !verifyMasterPassword(password)) {
-        alert('Incorrect master password');
-        return;
-      }
-      setMasterPassword(password);
-      
       setShowModal(false);
       setEditingEntry(null);
-      setFormData({ service: '', websiteUrl: '', username: '', password: '', notes: '' });
+      setFormData({ service: '', websiteUrl: '', username: '', password: '', notes: '', expiresAt: '' });
       fetchEntries();
     } catch (error) {
       console.error('Error saving password:', error);
@@ -154,7 +155,8 @@ export const PasswordManager = () => {
       websiteUrl: entry.websiteUrl || '',
       username: entry.username,
       password: decrypted,
-      notes: entry.notes || ''
+      notes: entry.notes || '',
+      expiresAt: entry.expiresAt || ''
     });
     setShowModal(true);
   };
@@ -254,14 +256,40 @@ export const PasswordManager = () => {
             🔒 AES-256 Encrypted
           </span>
         </h2>
-        <button className="btn btn-primary" onClick={() => {
-          setEditingEntry(null);
-          setFormData({ service: '', websiteUrl: '', username: '', password: '', notes: '' });
-          setShowModal(true);
-        }}>
-          <Plus size={18} />
-          Add Password
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button 
+            className="btn btn-outline" 
+            onClick={() => setShowChangeMasterPassword(true)}
+            title="Change Master Password"
+          >
+            <Lock size={18} />
+            Change Master Password
+          </button>
+          <button 
+            className="btn btn-outline" 
+            onClick={() => {
+              if (confirm('⚠️ WARNING: Resetting your master password will require you to delete all saved passwords.\n\nYou will need to set a new master password and re-add all passwords.\n\nContinue?')) {
+                localStorage.removeItem(`masterPassword_${user?.uid}`);
+                setMasterPasswordSet(false);
+                setMasterPassword('');
+                alert('Master password reset! You will now set up a new master password.');
+                window.location.reload();
+              }
+            }}
+            title="Forgot Master Password? Reset it"
+            style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+          >
+            Reset Master Password
+          </button>
+          <button className="btn btn-primary" onClick={() => {
+            setEditingEntry(null);
+            setFormData({ service: '', websiteUrl: '', username: '', password: '', notes: '', expiresAt: '' });
+            setShowModal(true);
+          }}>
+            <Plus size={18} />
+            Add Password
+          </button>
+        </div>
       </div>
 
       <div className="card">
@@ -346,7 +374,7 @@ export const PasswordManager = () => {
               <button className="modal-close" onClick={() => {
                 setShowModal(false);
                 setEditingEntry(null);
-                setFormData({ service: '', websiteUrl: '', username: '', password: '', notes: '' });
+                setFormData({ service: '', websiteUrl: '', username: '', password: '', notes: '', expiresAt: '' });
               }}>×</button>
             </div>
 
@@ -426,7 +454,7 @@ export const PasswordManager = () => {
               <button className="btn btn-outline" onClick={() => {
                 setShowModal(false);
                 setEditingEntry(null);
-                setFormData({ service: '', websiteUrl: '', username: '', password: '', notes: '' });
+                setFormData({ service: '', websiteUrl: '', username: '', password: '', notes: '', expiresAt: '' });
               }}>
                 Cancel
               </button>
