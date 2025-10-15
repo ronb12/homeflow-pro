@@ -195,6 +195,70 @@ export const PasswordManager = () => {
     setFormData({ ...formData, password });
   };
 
+  const calculatePasswordStrength = (password: string): { score: number; label: string; color: string } => {
+    if (!password) return { score: 0, label: '', color: '' };
+    
+    let score = 0;
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^a-zA-Z0-9]/.test(password)) score += 1;
+    
+    if (score <= 2) return { score, label: 'Weak', color: '#ef4444' };
+    if (score <= 4) return { score, label: 'Fair', color: '#f59e0b' };
+    if (score <= 5) return { score, label: 'Good', color: '#3b82f6' };
+    return { score, label: 'Strong', color: '#10b981' };
+  };
+
+  const changeMasterPassword = async () => {
+    if (!oldMasterPassword || !newMasterPassword) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    if (!verifyMasterPassword(oldMasterPassword)) {
+      alert('Current master password is incorrect');
+      return;
+    }
+
+    if (newMasterPassword.length < 6) {
+      alert('New master password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      const updatedEntries = entries.map(entry => {
+        const decrypted = decryptPassword(entry.encryptedPassword);
+        const reencrypted = CryptoJS.AES.encrypt(decrypted, newMasterPassword).toString();
+        return { ...entry, encryptedPassword: reencrypted };
+      });
+
+      for (const entry of updatedEntries) {
+        await updateDoc(doc(db, 'passwords', entry.id), {
+          encryptedPassword: entry.encryptedPassword
+        });
+      }
+
+      const hashed = CryptoJS.SHA256(newMasterPassword).toString();
+      localStorage.setItem(`masterPassword_${user?.uid}`, hashed);
+      setMasterPassword(newMasterPassword);
+
+      setOldMasterPassword('');
+      setNewMasterPassword('');
+      setShowChangeMasterPassword(false);
+      setShowOldPassword(false);
+      setShowNewPassword(false);
+
+      alert('Master password changed successfully!');
+      fetchEntries();
+    } catch (error) {
+      console.error('Error changing master password:', error);
+      alert('Error changing master password. Please try again.');
+    }
+  };
+
   if (!masterPasswordSet) {
     return (
       <div className="card" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center', padding: '40px' }}>
@@ -300,13 +364,49 @@ export const PasswordManager = () => {
             <p className="text-small text-muted">Click "Add Password" to save your first password</p>
           </div>
         ) : (
-          entries.map(entry => (
+          entries.map(entry => {
+            const isExpired = entry.expiresAt && new Date(entry.expiresAt) < new Date();
+            const isExpiringSoon = entry.expiresAt && !isExpired && 
+              new Date(entry.expiresAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            
+            return (
             <div key={entry.id} className="list-item">
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '600', marginBottom: '4px' }}>{entry.service}</div>
+                <div style={{ fontWeight: '600', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  {entry.service}
+                  {isExpired && (
+                    <span style={{ 
+                      fontSize: '11px', 
+                      padding: '2px 8px', 
+                      background: 'rgba(239, 68, 68, 0.1)', 
+                      color: '#ef4444',
+                      borderRadius: '4px',
+                      fontWeight: '600'
+                    }}>
+                      ⚠️ EXPIRED
+                    </span>
+                  )}
+                  {isExpiringSoon && (
+                    <span style={{ 
+                      fontSize: '11px', 
+                      padding: '2px 8px', 
+                      background: 'rgba(234, 179, 8, 0.1)', 
+                      color: '#ca8a04',
+                      borderRadius: '4px',
+                      fontWeight: '600'
+                    }}>
+                      ⏰ EXPIRES SOON
+                    </span>
+                  )}
+                </div>
                 <div className="text-small text-muted" style={{ marginBottom: '4px' }}>
                   Username: {entry.username}
                 </div>
+                {entry.expiresAt && (
+                  <div className="text-small" style={{ marginBottom: '4px', color: isExpired ? '#ef4444' : isExpiringSoon ? '#ca8a04' : 'var(--gray)' }}>
+                    📅 Expires: {new Date(entry.expiresAt).toLocaleDateString()}
+                  </div>
+                )}
                 <div className="text-small" style={{ marginBottom: '8px' }}>
                   Password: {revealedPasswords[entry.id] ? (
                     <span style={{ fontFamily: 'monospace', color: 'var(--primary)', fontSize: '14px', fontWeight: '600' }}>
@@ -362,7 +462,8 @@ export const PasswordManager = () => {
                 </button>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -434,8 +535,40 @@ export const PasswordManager = () => {
                   <RefreshCw size={18} />
                 </button>
               </div>
+              {formData.password && (() => {
+                const strength = calculatePasswordStrength(formData.password);
+                return (
+                  <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ flex: 1, height: '6px', background: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ 
+                        width: `${(strength.score / 6) * 100}%`, 
+                        height: '100%', 
+                        background: strength.color,
+                        transition: 'all 0.3s ease'
+                      }} />
+                    </div>
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: strength.color }}>
+                      {strength.label}
+                    </span>
+                  </div>
+                );
+              })()}
               <div style={{ fontSize: '13px', color: 'var(--primary)', marginTop: '6px', background: 'rgba(59, 130, 246, 0.1)', padding: '8px', borderRadius: '4px' }}>
                 💡 <strong>You can create your own password</strong> or click the 🔄 button to generate a strong one
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Password Expiration (Optional)</label>
+              <input
+                type="date"
+                className="input"
+                value={formData.expiresAt}
+                onChange={e => setFormData({ ...formData, expiresAt: e.target.value })}
+                min={new Date().toISOString().split('T')[0]}
+              />
+              <div style={{ fontSize: '12px', color: 'var(--gray)', marginTop: '4px' }}>
+                📅 Get reminded when it's time to change this password
               </div>
             </div>
 
@@ -464,6 +597,94 @@ export const PasswordManager = () => {
                 disabled={!formData.service || !formData.username || !formData.password}
               >
                 {editingEntry ? 'Update' : 'Save'} Password
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showChangeMasterPassword && (
+        <div className="modal-overlay" onClick={() => setShowChangeMasterPassword(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Change Master Password</h3>
+              <button className="modal-close" onClick={() => setShowChangeMasterPassword(false)}>×</button>
+            </div>
+
+            <div style={{ 
+              padding: '12px', 
+              background: 'rgba(234, 179, 8, 0.1)', 
+              color: '#ca8a04',
+              borderRadius: 'var(--radius)',
+              marginBottom: '16px',
+              fontSize: '14px'
+            }}>
+              ⚠️ Warning: All your saved passwords will be re-encrypted with the new master password.
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Current Master Password *</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type={showOldPassword ? "text" : "password"}
+                  className="input"
+                  value={oldMasterPassword}
+                  onChange={e => setOldMasterPassword(e.target.value)}
+                  placeholder="Enter current master password"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setShowOldPassword(!showOldPassword)}
+                  title={showOldPassword ? "Hide password" : "Show password"}
+                  type="button"
+                >
+                  {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">New Master Password * (min 6 characters)</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  className="input"
+                  value={newMasterPassword}
+                  onChange={e => setNewMasterPassword(e.target.value)}
+                  placeholder="Enter new master password"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  title={showNewPassword ? "Hide password" : "Show password"}
+                  type="button"
+                >
+                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn btn-outline" 
+                onClick={() => {
+                  setShowChangeMasterPassword(false);
+                  setOldMasterPassword('');
+                  setNewMasterPassword('');
+                  setShowOldPassword(false);
+                  setShowNewPassword(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={changeMasterPassword}
+                disabled={!oldMasterPassword || !newMasterPassword}
+              >
+                Change Password
               </button>
             </div>
           </div>
