@@ -1,6 +1,6 @@
 // Simplified implementations for remaining features
 import { GenericFeature } from './GenericFeature';
-import { Trash2, Home, UtensilsCrossed, BookOpen, Users, Briefcase, FolderOpen, Phone, Wrench, Shield, Dog, Leaf, Cloud, StickyNote, Car, CreditCard, Lock, UserPlus, Zap, Smartphone, Package, Repeat, Target, Bell } from 'lucide-react';
+import { Trash2, Home, UtensilsCrossed, BookOpen, Users, Briefcase, FolderOpen, Phone, Wrench, Shield, Dog, Leaf, Link as LinkIcon, StickyNote, Car, CreditCard, Lock, UserPlus, Zap, Smartphone, Package, Repeat, Target, Bell } from 'lucide-react';
 
 export const Inventory = () => (
   <GenericFeature
@@ -315,28 +315,50 @@ export const Plants = () => (
   />
 );
 
-export const Weather = () => (
-  <div className="card">
-    <div style={{ textAlign: 'center', padding: '40px' }}>
-      <Cloud size={64} style={{ color: 'var(--primary)', marginBottom: '16px' }} />
-      <h2 style={{ fontSize: '48px', fontWeight: '700', margin: '0' }}>72°F</h2>
-      <p style={{ fontSize: '18px', color: 'var(--gray)', margin: '8px 0' }}>Partly Cloudy</p>
-      <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '24px' }}>
-        <div>
-          <div className="text-small text-muted">Humidity</div>
-          <div style={{ fontWeight: '600' }}>65%</div>
+export const QuickLinks = () => (
+  <GenericFeature
+    collectionName="quicklinks"
+    title="Quick Links"
+    icon={<LinkIcon size={24} />}
+    fields={[
+      { name: 'name', label: 'Link Name', type: 'text', required: true },
+      { name: 'url', label: 'URL', type: 'text', required: true },
+      { name: 'category', label: 'Category', type: 'select', options: ['Utilities', 'Banking', 'School', 'Medical', 'Shopping', 'Other'] },
+      { name: 'description', label: 'Description (optional)', type: 'text' },
+    ]}
+    renderItem={(item, onDelete, onEdit) => (
+      <div className="list-item">
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <a 
+              href={item.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ fontWeight: '600', color: 'var(--primary)', textDecoration: 'none', flex: 1 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              🔗 {item.name}
+            </a>
+            <button 
+              className="btn btn-sm btn-outline"
+              onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(); }}
+              style={{ padding: '4px 8px', fontSize: '12px' }}
+            >
+              Edit
+            </button>
+          </div>
+          <div className="text-small text-muted" style={{ marginTop: '4px' }}>
+            {item.category}
+            {item.description && ` • ${item.description}`}
+          </div>
         </div>
-        <div>
-          <div className="text-small text-muted">Wind</div>
-          <div style={{ fontWeight: '600' }}>8 mph</div>
-        </div>
-        <div>
-          <div className="text-small text-muted">UV Index</div>
-          <div style={{ fontWeight: '600' }}>4</div>
-        </div>
+        <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+          <Trash2 size={16} />
+        </button>
       </div>
-    </div>
-  </div>
+    )}
+    emptyMessage="No quick links yet. Add your favorite websites!"
+  />
 );
 
 export const Notes = () => (

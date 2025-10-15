@@ -8,7 +8,7 @@ import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { PWAInstall } from './components/PWAInstall';
 import { Dashboard, Tasks, Calendar, Shopping, Budget, Bills } from './components/FeaturesList';
-import { Inventory, Meals, Recipes, Family, Chores, Documents, Contacts, Maintenance, Warranties, Pets, Plants, Weather, Notes, Vehicles, Insurance, Passwords, Guests, Energy, Devices, Packages, Subscriptions, Goals, Notifications } from './components/AllFeatures';
+import { Inventory, Meals, Recipes, Family, Chores, Documents, Contacts, Maintenance, Warranties, Pets, Plants, QuickLinks, Notes, Vehicles, Insurance, Passwords, Guests, Energy, Devices, Packages, Subscriptions, Goals, Notifications } from './components/AllFeatures';
 
 const App = () => {
   const { user, setUser } = useStore();
@@ -176,11 +176,11 @@ const App = () => {
                 </main>
               </div>
             } />
-            <Route path="/weather" element={
+            <Route path="/quicklinks" element={
               <div style={{ display: 'flex' }}>
                 <Sidebar />
                 <main style={{ marginLeft: '280px', flex: 1, padding: '32px', minHeight: '100vh', background: 'var(--light)' }}>
-                  <div className="container"><Weather /></div>
+                  <div className="container"><QuickLinks /></div>
                 </main>
               </div>
             } />

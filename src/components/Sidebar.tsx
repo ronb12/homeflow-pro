@@ -26,7 +26,7 @@ const menuItems = [
   { id: 'warranties', label: 'Warranties', icon: Shield },
   { id: 'pets', label: 'Pet Management', icon: Dog },
   { id: 'plants', label: 'Plant Care', icon: Leaf },
-  { id: 'weather', label: 'Weather', icon: Cloud },
+  { id: 'quicklinks', label: 'Quick Links', icon: Cloud },
   { id: 'notes', label: 'Notes', icon: StickyNote },
   { id: 'vehicles', label: 'Vehicles', icon: Car },
   { id: 'insurance', label: 'Insurance', icon: CreditCard },
